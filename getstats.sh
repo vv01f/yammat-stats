@@ -22,6 +22,10 @@ dev=0
 ang=0
 adv=0
 aag=0
+iadbt=0
+iacdt=0
+audbt=0
+aucdt=0
 #Kassensturz
 echo -en "\nCount The Cash!\n\nAmount:\t"
 read cash
@@ -37,6 +41,7 @@ adl=$(echo "-1 * ${aal}" | bc )
 
 
 filename=${file}-journal.html
+wget -q ${url}/reactivate -O ./tmp/inactive
 wget -q ${url}journal -O ${filename}
 e=$?
 if [ $e -ne 0 ]; then
@@ -65,10 +70,24 @@ while : ; do
 			if [[ $( echo "${euro} < 0" | bc ) -eq 1 ]]; then
 				dbt=$( echo "${dbt} + ${euro}" |bc )
 				neg=$(( ${neg} + 1 ))
+				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
+				e=$?
+				if [ $e -eq 0 ]; then
+					iadbt=$( echo "${iadbt} + ${euro}" |bc )
+				else
+					audbt=$( echo "${audbt} + ${euro}" |bc )
+				fi
 			else
 	#			#cdt=$(( ${cdt} + ${euro} ))
 				cdt=$( echo "${cdt} + ${euro}" | bc )
 				pos=$(( ${pos} + 1 ))
+				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
+				e=$?
+				if [ $e -eq 0 ]; then
+					iacdt=$( echo "${iacdt} + ${euro}" |bc )
+				else
+					aucdt=$( echo "${aucdt} + ${euro}" |bc )
+				fi
 			fi
 			if [[ $( echo "${euro} < ${dvl}" | bc ) -eq 1 ]]; then
 				dev=$(( ${dev} + 1 ))
@@ -103,20 +122,23 @@ done
 rm ${file}*.html
 wget -q ${url} -O ./tmp/startpage
 useractive=$( echo $( cat ./tmp/startpage | grep -c -i 'href="http://matemat.hq.c3d2.de/user/' ) - 1 | bc )
-rm ./tmp/startpage
+rm -f ./tmp/startpage ./tmp/inactive
 ##
 # get information for missing items
 ##
 #filename=${file}-summary.html
 #wget -q ${url}summary -O ${filename}
-#
 ##
-
-echo -e "]\n\n== Matemat User Statistics ==\n\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n"
-echo -e "\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)" >> ${datum}${listfile}
+userinactive=$( echo ${cnt} - ${useractive} | bc )
+echo -en "]\n\n== Matemat User Statistics ==\n"
+echo -en "\nTotal Users:\t"${cnt}
+echo -en "\nActive Users:\t"${useractive}" ("${audbt}" vs +"${aucdt}" ~ "$( echo " ( "${audbt}" + "${aucdt}" ) / "${useractive} | bc )" €/User)"
+echo -en "\nInactive Users:\t"${userinactive}" ("${iadbt}" vs +"${iacdt}" ~ "$( echo " ( "${iadbt}" + "${iacdt}" ) / "${useractive} | bc )" €/User)"
+echo -en "\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n"
+echo -en "\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}" ("${aucdt}" vs +"${audbt}" ~ "$( echo " ( "${audbt}" + "${aucdt}" ) / "${useractive} | bc )" €/User)\nInactive Users:\t"${userinactive}" ("${iadbt}" vs +"${iacdt}" ~ "$( echo " ( "${iadbt}" + "${iacdt}" ) / "${useractive} | bc )" €/User)\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n" >> ${datum}${listfile}
 if [[ ! -z ${cash} ]]; then
-	echo -e "CashReg:\t"${cash}" €"
-	echo -e "\nCashReg:\t"${cash}" €\n" >> ${datum}${listfile}
+	echo -e "Cash Counted:\t"${cash}" €"
+	echo -e "Cash Counted:\t"${cash}" €" >> ${datum}${listfile}
 fi
-echo -e "CashYMT:\t"${stock}
-echo -e "\nCashYMT:\t"${stock}"\n" >> ${datum}${listfile}
+echo -e "Cash Registered:\t"${stock}
+echo -e "Cash Registered:\t"${stock}"\n" >> ${datum}${listfile}
