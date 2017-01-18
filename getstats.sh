@@ -26,6 +26,7 @@ iadbt=0
 iacdt=0
 audbt=0
 aucdt=0
+ustatus=0
 #Kassensturz
 echo -en "\nCount The Cash!\n\nAmount:\t"
 read cash
@@ -73,8 +74,10 @@ while : ; do
 				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
 				e=$?
 				if [ $e -eq 0 ]; then
+					ustatus=0
 					iadbt=$( echo "${iadbt} + ${euro}" |bc )
 				else
+					ustatus=1
 					audbt=$( echo "${audbt} + ${euro}" |bc )
 				fi
 			else
@@ -84,8 +87,10 @@ while : ; do
 				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
 				e=$?
 				if [ $e -eq 0 ]; then
+					ustatus=0
 					iacdt=$( echo "${iacdt} + ${euro}" |bc )
 				else
+					ustatus=1
 					aucdt=$( echo "${aucdt} + ${euro}" |bc )
 				fi
 			fi
@@ -104,7 +109,7 @@ while : ; do
 	#		echo -e "\n€: "${euro}"\nS: "${dbt}"\nH: "${cdt}
 			#name
 			name=$( grep '<h3>Wähle deinen Artikel,' ${filename}|cut -d',' -f2|cut -d' ' -f2|cut -d'<' -f1 )
-			echo -e ${user}"\t"${euro}"\t"${name} >> ${datum}${listfile}
+			echo -e ${user}"\t"${ustatus}"\t"${euro}"\t"${name} >> ${datum}${listfile}
 		else
 			#fehler speichern
 			errcnt=$(( ${errcnt} +1 ))
@@ -140,5 +145,5 @@ if [[ ! -z ${cash} ]]; then
 	echo -e "Cash Counted:\t"${cash}" €"
 	echo -e "Cash Counted:\t"${cash}" €" >> ${datum}${listfile}
 fi
-echo -e "Cash Registered:\t"${stock}
+echo -e "Cash Registered:\t"${stock}"\n\nSaved in:\t"${datum}${listfile}"\n"
 echo -e "Cash Registered:\t"${stock}"\n" >> ${datum}${listfile}
