@@ -37,7 +37,7 @@ adl=$(echo "-1 * ${aal}" | bc )
 
 
 filename=${file}-journal.html
-wget ${url}journal -O ${filename}
+wget -q ${url}journal -O ${filename}
 e=$?
 if [ $e -ne 0 ]; then
 	echo "Jornal not available: "${url}/journal
@@ -52,7 +52,6 @@ while : ; do
 	e=$?
 	if [ $e -ne 0 ]; then
 		errcnt=$(( ${errcnt} +1 ))
-#		errusr=$(( ${errusr} +1 ))
 	else
 		grep '<div id="message">Nutzer unbekannt</div>' ${filename} > /dev/null
 		e=$?
@@ -102,6 +101,9 @@ while : ; do
 	user=$(( ${user} + 1 ))
 done
 rm ${file}*.html
+wget -q ${url} -O ./tmp/startpage
+useractive=$( echo $( cat ./tmp/startpage | grep -c -i 'href="http://matemat.hq.c3d2.de/user/' ) - 1 | bc )
+rm ./tmp/startpage
 ##
 # get information for missing items
 ##
@@ -110,8 +112,8 @@ rm ${file}*.html
 #
 ##
 
-echo -e "]\n\n== Matemat User Statistics ==\n\nTotal Users:\t"$( echo ${cnt} - ${errusr} | bc )"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n"
-echo -e "\nTotal Users:\t"${cnt}"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)" >> ${datum}${listfile}
+echo -e "]\n\n== Matemat User Statistics ==\n\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n"
+echo -e "\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}"\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)" >> ${datum}${listfile}
 if [[ ! -z ${cash} ]]; then
 	echo -e "CashReg:\t"${cash}" €"
 	echo -e "\nCashReg:\t"${cash}" €\n" >> ${datum}${listfile}
