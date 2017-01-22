@@ -1,149 +1,119 @@
 #!/bin/bash
 
-url=http://matemat.hq.c3d2.de/
-#angel-amounts
-agl=10
-aal=50
-#file-dir
+arch_diff=10
+norm_diff=50
+
+url="http://matemat.hq.c3d2.de/"
 tmpdir="./tmp/"
-#output file extension
 listfile="-list.text"
-#counter
-user=0
-errcnt=0
-errusr=0
-e=0
-dbt=0
-cdt=0
-cnt=0
-pos=0
-neg=0
-dev=0
-ang=0
-adv=0
-aag=0
-iadbt=0
-iacdt=0
-audbt=0
-aucdt=0
-ustatus=0
-#Kassensturz
-echo -en "\nCount The Cash!\n\nAmount:\t"
-read cash
+
+cash=0
+#echo -en "\nCount The Cash!\n\nAmount:\t"	
+#read cash
+data=""
 
 mkdir -p ${tmpdir}
 datum=$( date +"%y%m%dT%H%M%S" )
+udate=$( date +"%s" )
 file=$(echo ${tmpdir}${datum}"-")
-echo -e "Auswertung vom: "$( date +"%d.%m.%Y %H:%M" )"\n\nUser\tEuro\tName" > ${datum}${listfile}
-echo -ne "\nProcessing Matemat Users ...\n["
-#devil-amounts 
-dvl=$(echo "-1 * ${agl}" | bc )
-adl=$(echo "-1 * ${aal}" | bc )
+out=${udate}${listfile}
+
+echo -en "\n["
+
+#~ stage=inventory.json
+#~ dir="backup/"
+#~ path=${url}${dir}${stage}
+#~ filename=${file}${stage}
+#~ wget -q ${path} -O ${tmpdir}${stage}
+#~ e=$?
+#~ if [ $e -ne 0 ]; then
+	#~ echo "Stats not available: "${path}
+	#~ exit 1;
+#~ fi
+#~ invfile=${tmpdir}${stage}
+#~ json_file=${invfile}
+#~ n=$(( $( cat ${invfile} | jq -rMS . | grep "{" | wc -l ) - 1 ))
+#~ printf '{'"\n" >> ${out}
+#~ for i in $( seq 0 1 ${n} ); do
+	#~ json_file_i=${json_file}"_"${i}
+	#~ cat ${json_file} | jq -S ".["${i}"]" > ${json_file_i}
+	#~ #echo -n "----------------"
+	#~ #echo "\"item\": "${i}","
+	#~ json_vars=$( cat ${json_file_i} | jq -rMS . | cut -d'"' -f2|head -n -1|tac|head -n -1|tac )
+	#~ printf '{'"\n" >> ${out}
+	#~ for e in ${json_vars}; do
+		#~ var_name=$e
+		#~ var_cont=$( cat ${json_file_i} | jq "."${e} )
+		#~ if [[ $var_cont = "null" ]]; then
+			#~ var_cont=0;
+		#~ fi
+		#~ # variablennamen dem namen in einer variable zuweisen (printf -v) und auslesen (printf ${!name})
+		#~ printf -v ${var_name} "%q" ${var_cont}
+		#~ #ginge in bash auch mit `declare`
+		#~ #für sh geht `eval ${var_name}` $( cat ${json_file} | jq "."${var_name} )
+		#~ #declare ${var_name} $( cat ${json_file} | jq "."${var_name} )
+		#~ printf "\"${var_name}\": ${!var_name},\n" >> ${out}
+		#~ if [[ ${data} != "" ]]; then
+			#~ data=${data}","
+		#~ fi
+		#~ #echo -n ${i}
+		#~ echo -n ":"
+		#~ data=${data}"item"${i}"_"${var_name}"="${!var_name}
+		#~ #echo $data
+		#~ #sleep .1
+	#~ done
+	#~ printf '"none": 0\n},'"\n" >> ${out}
+#~ done
+#~ printf '{"none": 0}}'"\n" >> ${out}
 
 
-filename=${file}-journal.html
-wget -q ${url}/reactivate -O ./tmp/inactive
-wget -q ${url}journal -O ${filename}
+stage=statistics.json
+dir=""
+path=${url}${dir}${stage}
+filename=${file}${stage}
+wget -q ${path} -O ${tmpdir}${stage}
 e=$?
 if [ $e -ne 0 ]; then
-	echo "Jornal not available: "${url}/journal
+	echo "Stats not available: "${path}
 	exit 1;
 fi
-stock=$( echo $( grep -i "Kassenbestand:" ${filename} | cut -d":" -f2 | cut -d"<" -f1 ) )
-while : ; do
-	filename=${file}${user}.html
-	#datei holen
-	wget -q ${url}user/${user} -O ${filename}
-	#datei auf erfolg prüfen
-	e=$?
-	if [ $e -ne 0 ]; then
-		errcnt=$(( ${errcnt} +1 ))
-	else
-		grep '<div id="message">Nutzer unbekannt</div>' ${filename} > /dev/null
-		e=$?
-		if [ $e -ne 0 ]; then
-			#erfolg speichern
-			errcnt=0
-			cnt=$(( ${cnt} + 1 ))
-			echo -n ":"
-				#guthaben
-			euro=$( grep -o 'aktuelles Guthaben:.*' ${filename} | cut -d'<' -f1 | cut -d':' -f2 | cut -d' ' -f2 | tr ',' '.' )
-			if [[ $( echo "${euro} < 0" | bc ) -eq 1 ]]; then
-				dbt=$( echo "${dbt} + ${euro}" |bc )
-				neg=$(( ${neg} + 1 ))
-				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
-				e=$?
-				if [ $e -eq 0 ]; then
-					ustatus=0
-					iadbt=$( echo "${iadbt} + ${euro}" |bc )
-				else
-					ustatus=1
-					audbt=$( echo "${audbt} + ${euro}" |bc )
-				fi
-			else
-	#			#cdt=$(( ${cdt} + ${euro} ))
-				cdt=$( echo "${cdt} + ${euro}" | bc )
-				pos=$(( ${pos} + 1 ))
-				cat ./tmp/inactive|grep -i "http://matemat.hq.c3d2.de/user/"|cut -d":" -f2|cut -d'/' -f5|sort|grep -e "^"${user}"$" > /dev/null
-				e=$?
-				if [ $e -eq 0 ]; then
-					ustatus=0
-					iacdt=$( echo "${iacdt} + ${euro}" |bc )
-				else
-					ustatus=1
-					aucdt=$( echo "${aucdt} + ${euro}" |bc )
-				fi
-			fi
-			if [[ $( echo "${euro} < ${dvl}" | bc ) -eq 1 ]]; then
-				dev=$(( ${dev} + 1 ))
-			fi
-			if [[ $( echo "${euro} > ${agl}" | bc ) -eq 1 ]]; then
-				ang=$(( ${ang} + 1 ))
-			fi
-			if [[ $( echo "${euro} < ${adl}" | bc ) -eq 1 ]]; then
-				adv=$(( ${adv} + 1 ))
-			fi
-			if [[ $( echo "${euro} > ${aal}" | bc ) -eq 1 ]]; then
-				aag=$(( ${aag} + 1 ))
-			fi
-	#		echo -e "\n€: "${euro}"\nS: "${dbt}"\nH: "${cdt}
-			#name
-			name=$( grep '<h3>Wähle deinen Artikel,' ${filename}|cut -d',' -f2|cut -d' ' -f2|cut -d'<' -f1 )
-			echo -e ${user}"\t"${ustatus}"\t"${euro}"\t"${name} >> ${datum}${listfile}
-		else
-			#fehler speichern
-			errcnt=$(( ${errcnt} +1 ))
-			#fehlerhaftes erebnis löschen
-			rm ${filename}
-		fi
+statsfile=${tmpdir}${stage}
+
+json_file=${statsfile}
+json_vars=$( cat ${json_file} | jq -rMS . | cut -d'"' -f2|head -n -1|tac|head -n -1|tac )
+for e in ${json_vars}; do
+	var_name=$e
+	# variablennamen dem namen in einer variable zuweisen (printf -v) und auslesen (printf ${!name})
+	printf -v ${var_name} "%q" $( cat ${json_file} | jq "."${var_name} )
+	#ginge in bash auch mit `declare`
+	#für sh geht `eval ${var_name}` $( cat ${json_file} | jq "."${var_name} )
+	#declare ${var_name} $( cat ${json_file} | jq "."${var_name} )
+	if [[ ${data} != "" ]]; then
+		data=${data}","
 	fi
-	if [[ ${errcnt} -gt 3 ]]; then
-		#bei >x fehlern abbrechen
-		break
-	fi
-	#next userfile
-	user=$(( ${user} + 1 ))
+	echo -n ":"
+	data=${data}${var_name}"="${!var_name}
+	#printf ${var_name}": "${!var_name}"\n"
+	printf ${var_name}": "${!var_name}"\n" >> ${out}
 done
-rm ${file}*.html
-wget -q ${url} -O ./tmp/startpage
-useractive=$( echo $( cat ./tmp/startpage | grep -c -i 'href="http://matemat.hq.c3d2.de/user/' ) - 1 | bc )
-rm -f ./tmp/startpage ./tmp/inactive
-##
-# get information for missing items
-##
-#filename=${file}-summary.html
-#wget -q ${url}summary -O ${filename}
-##
-userinactive=$( echo ${cnt} - ${useractive} | bc )
-echo -en "]\n\n== Matemat User Statistics ==\n"
-echo -en "\nTotal Users:\t"${cnt}
-echo -en "\nActive Users:\t"${useractive}" ("${audbt}" vs +"${aucdt}" ~ "$( echo " ( "${audbt}" + "${aucdt}" ) / "${useractive} | bc )" €/User)"
-echo -en "\nInactive Users:\t"${userinactive}" ("${iadbt}" vs +"${iacdt}" ~ "$( echo " ( "${iadbt}" + "${iacdt}" ) / "${useractive} | bc )" €/User)"
-echo -en "\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n"
-echo -en "\nTotal Users:\t"${cnt}"\nActive Users:\t"${useractive}" ("${aucdt}" vs +"${audbt}" ~ "$( echo " ( "${audbt}" + "${aucdt}" ) / "${useractive} | bc )" €/User)\nInactive Users:\t"${userinactive}" ("${iadbt}" vs +"${iacdt}" ~ "$( echo " ( "${iadbt}" + "${iacdt}" ) / "${useractive} | bc )" €/User)\nGood Users:\t+"${cdt}" € ("${pos}" Users)\nEvil Users:\t"${dbt}" € ("${neg}" Users)\nNoobangel:\t"${ang}" ( > +${agl} €)\nNoobdevil:\t"${dev}" ( < ${dvl} €)\nArchangel:\t"${aag}" ( > +${aal} €)\nArchdevil:\t"${adv}" ( < ${adl} €)\n" >> ${datum}${listfile}
-if [[ ! -z ${cash} ]]; then
-	echo -e "Cash Counted:\t"${cash}" €"
-	echo -e "Cash Counted:\t"${cash}" €" >> ${datum}${listfile}
-fi
-echo -e "Cash Registered:\t"${stock}"\n\nSaved in:\t"${datum}${listfile}"\n"
-echo -e "Cash Registered:\t"${stock}"\n" >> ${datum}${listfile}
+
+echo -e "]\n"
+
+#total_loss_prime_price=$( $buyprice / $bottlespercrate * $missing_bottles) )#verlust der getränke zum einkaufpreis
+
+#var="hack"; value="ePeter"; printf -v $var $value; printf ${var}": "${!var%}"\n"
+
+data=${data}" "${udate}"000000000"
+echo ${data} > ./data.post
+
+
+source influxdb-conf.sh
+# nur ein bsp
+url=https://${influx_usr}:${influx_pwd}@${influx_hst}:${influx_prt}/write?db=${influx_dbn}
+data=${influx_tbl}\ ${data}
+echo curl -v -i -POST ${url} --data-binary ${data}
+echo -e "\n\n"
+curl -v -i -POST ${url} --data-binary ${data}
+
+
+echo -e "\nDump-File: "${out}
