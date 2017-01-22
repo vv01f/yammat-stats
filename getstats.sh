@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 arch_diff=10
 norm_diff=50
 
@@ -71,7 +71,7 @@ stage=statistics.json
 dir=""
 path=${url}${dir}${stage}
 filename=${file}${stage}
-wget -q ${path} -O ${tmpdir}${stage}
+#wget -q ${path} -O ${tmpdir}${stage}
 e=$?
 if [ $e -ne 0 ]; then
 	echo "Stats not available: "${path}
@@ -109,11 +109,12 @@ echo ${data} > ./data.post
 
 source influxdb-conf.sh
 # nur ein bsp
+#options_curl=-v -i -XPOST
 url=https://${influx_usr}:${influx_pwd}@${influx_hst}:${influx_prt}/write?db=${influx_dbn}
 data=${influx_tbl}\ ${data}
-echo curl -v -i -POST ${url} --data-binary ${data}
+echo curl "$url" --data-binary "$data"
 echo -e "\n\n"
-curl -v -i -POST ${url} --data-binary ${data}
+curl "$url" --data-binary "$data"
 
 
 echo -e "\nDump-File: "${out}
